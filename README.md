@@ -2,15 +2,15 @@
 Sparse convolution in python
 
 Install:
-`git clone https://github.com/RichieHakim/sparse_convolution`
-`cd sparse_convolution`
-`pip install -e .`
+- `git clone https://github.com/RichieHakim/sparse_convolution`
+- `cd sparse_convolution`
+- `pip install -e .`
 
 Basic usage:
 ```
-- import sparse_convolution as sc
-- import numpy as np
-- import scipy.sparse
+import sparse_convolution as sc
+import numpy as np
+import scipy.sparse
 
 # Create a single sparse matrix
 A = scipy.sparse.rand(100, 100, density=0.1)

@@ -1,13 +1,18 @@
 # sparse_convolution
-Sparse convolution in python
+Sparse convolution in python.
+Uses Toeplitz convolutional matrix multiplication to perform sparse convolution. \
+This allows for extremely fast convolution when: \
+- The kernel is small (<= 10x10)
+- The input array is sparse (<= 1% density)
+- Many arrays are convolved with the same kernel
 
-Install: \
+## Install: \
 `git clone https://github.com/RichieHakim/sparse_convolution` \
 `cd sparse_convolution` \
 `pip install -e .` 
 
 
-Basic usage: \
+## Basic usage: \
 Convolve a single sparse 2D array with a 2D kernel.
 ```
 import sparse_convolution as sc
@@ -37,7 +42,7 @@ C = conv(
 ```
 
 
-Batching usage: \
+## Batching usage: \
 Convolve multiple sparse 2D arrays with a 2D kernel. \
 The input arrays must be reshaped into flattened vectors and stacked into a single sparse array of shape: `(n_arrays, height * width)`. 
 ```
@@ -74,3 +79,12 @@ C = conv(
 # Reshape the output back to (3, 100, 100)
 C_reshaped = np.stack([c.reshape(100, 100).toarray() for c in C], axis=0)
 ```
+
+## References
+- See: https://stackoverflow.com/a/51865516 and https://github.com/alisaaalehi/convolution_as_multiplication
+    for a nice illustration.
+- See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.convolution_matrix.html 
+    for 1D version.
+- See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.matmul_toeplitz.html#scipy.linalg.matmul_toeplitz 
+    for potential ways to make this implementation faster.
+

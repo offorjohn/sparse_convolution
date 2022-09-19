@@ -35,7 +35,7 @@ C = conv(
     mode='same',
 ).toarray()
 ```
-\n
+\
 
 Batching usage: \
 Convolve multiple sparse 2D arrays with a 2D kernel. \

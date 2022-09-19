@@ -2,9 +2,9 @@
 Sparse convolution in python
 
 Install:
-- `git clone https://github.com/RichieHakim/sparse_convolution`
-- `cd sparse_convolution`
-- `pip install -e .`
+`git clone https://github.com/RichieHakim/sparse_convolution` \
+`cd sparse_convolution` \
+`pip install -e .` \
 
 Basic usage:
 ```

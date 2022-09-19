@@ -1,18 +1,18 @@
 # sparse_convolution
 Sparse convolution in python.
 Uses Toeplitz convolutional matrix multiplication to perform sparse convolution. \
-This allows for extremely fast convolution when: \
+This allows for extremely fast convolution when: 
 - The kernel is small (<= 10x10)
 - The input array is sparse (<= 1% density)
 - Many arrays are convolved with the same kernel
 
-## Install: \
+## Install: 
 `git clone https://github.com/RichieHakim/sparse_convolution` \
 `cd sparse_convolution` \
 `pip install -e .` 
 
 
-## Basic usage: \
+## Basic usage: 
 Convolve a single sparse 2D array with a 2D kernel.
 ```
 import sparse_convolution as sc
@@ -42,7 +42,7 @@ C = conv(
 ```
 
 
-## Batching usage: \
+## Batching usage: 
 Convolve multiple sparse 2D arrays with a 2D kernel. \
 The input arrays must be reshaped into flattened vectors and stacked into a single sparse array of shape: `(n_arrays, height * width)`. 
 ```

@@ -2,7 +2,7 @@
 Sparse convolution in python.
 Uses Toeplitz convolutional matrix multiplication to perform sparse convolution. \
 This allows for extremely fast convolution when: 
-- The kernel is small (<= 10x10)
+- The kernel is small (<= 30x30)
 - The input array is sparse (<= 1% density)
 - Many arrays are convolved with the same kernel
 

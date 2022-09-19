@@ -35,10 +35,11 @@ C = conv(
     mode='same',
 ).toarray()
 ```
+\n
 
 Batching usage: \
 Convolve multiple sparse 2D arrays with a 2D kernel. \
-The input arrays must be reshaped into flattened vectors and stacked into a single sparse array of shape: `(n_arrays, height * width)`. \
+The input arrays must be reshaped into flattened vectors and stacked into a single sparse array of shape: `(n_arrays, height * width)`. 
 ```
 import sparse_convolution as sc
 import numpy as np

@@ -1,28 +1,54 @@
-"""A setuptools based setup module.
-See:
-https://packaging.python.org/en/latest/distributing.html
-https://github.com/pypa/sampleproject
-"""
+## setup.py file for roicat
+from pathlib import Path
 
-import setuptools
-from codecs import open
-from os import path
+from distutils.core import setup
 
-here = path.abspath(path.dirname(__file__))
+## Get the parent directory of this file
+dir_parent = Path(__file__).parent
 
-# Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+## Get requirements from requirements.txt
+def read_requirements():
+    with open(str(dir_parent / "requirements.txt"), "r") as req:
+        content = req.read()  ## read the file
+        requirements = content.split("\n") ## make a list of requirements split by (\n) which is the new line character
 
-requirements_f = open('requirements.txt', 'r')
-dependencies = list(requirements_f.readlines())
+    ## Filter out any empty strings from the list
+    requirements = [req for req in requirements if req]
+    ## Filter out any lines starting with #
+    requirements = [req for req in requirements if not req.startswith("#")]
+    ## Remove any commas, quotation marks, and spaces from each requirement
+    requirements = [req.replace(",", "").replace("\"", "").replace("\'", "").strip() for req in requirements]
 
-setuptools.setup(
+    return requirements
+deps_all = read_requirements()
+
+
+## Dependencies: latest versions of requirements
+### remove everything starting and after the first =,>,<,! sign
+deps_names = [req.split('=')[0].split('>')[0].split('<')[0].split('!')[0] for req in deps_all]
+deps_all_dict = dict(zip(deps_names, deps_all))
+deps_all_latest = dict(zip(deps_names, deps_names))
+
+
+## Get README.md
+with open(str(dir_parent / "README.md"), "r") as f:
+    readme = f.read()
+
+## Get version number
+with open(str(dir_parent / "sparse_convolution" / "__init__.py"), "r") as f:
+    for line in f:
+        if line.startswith("__version__"):
+            version = line.split("=")[1].strip().replace("\"", "").replace("\'", "")
+            break
+
+
+
+setup(
     name='sparse_convolution',
-    version='0.1.0',
+    version=version,
 
     description='Sparse convolution in python using Toeplitz convolution matrix multiplication.',
-    long_description=long_description,
+    long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
 
     # The project's main homepage.
@@ -33,7 +59,7 @@ setuptools.setup(
     author_email='richhakim@gmail.com',
 
     # Choose your license
-    # license='MIT',
+    license='MIT',
 
     # Supported platforms
     platforms=['Any'],
@@ -67,7 +93,7 @@ setuptools.setup(
 
     # You can just specify the packages manually here if your project is
     # simple. Or you can use find_packages().
-    packages=setuptools.find_packages(),
+    packages=['sparse_convolution'],
 
     # Alternatively, if you want to distribute just a my_module.py, uncomment
     # this:
@@ -77,7 +103,16 @@ setuptools.setup(
     # your project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/requirements.html
-    install_requires=dependencies,
+    install_requires=list(deps_all_dict.values()),
 
     include_package_data=True,
 )
+
+
+
+
+
+
+
+
+

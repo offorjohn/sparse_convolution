@@ -1,5 +1,5 @@
 # sparse_convolution
-Sparse convolution in python.
+Sparse convolution in python. \
 Uses Toeplitz convolutional matrix multiplication to perform sparse convolution. \
 This allows for extremely fast convolution when: 
 - The kernel is small (<= 30x30)

@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/project/bnpm  # Replace <package-name> with your PyPI project name
+      url: https://pypi.org/project/sparse_convolution  # Replace <package-name> with your PyPI project name
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 
@@ -87,7 +87,7 @@ jobs:
         ls ${{ github.workspace }}/dist    
     - name: Store the version number
       run: |
-        version=$(grep '__version__' ${{ github.workspace }}/bnpm/__init__.py | awk -F = '{print $2}' | tr -d ' ' | tr -d \"\')
+        version=$(grep '__version__' ${{ github.workspace }}/sparse_convolution/__init__.py | awk -F = '{print $2}' | tr -d ' ' | tr -d \"\')
         echo "VERSION=$version" >> $GITHUB_ENV
     - name: Check version number
       run: echo "Version is $VERSION"
@@ -97,5 +97,5 @@ jobs:
       run: >-
         gh release create "v$VERSION" 
         --title "v$VERSION" 
-        --notes "Release for version $VERSION. Also available on PyPI: https://pypi.org/project/bnpm/$VERSION/"
+        --notes "Release for version $VERSION. Also available on PyPI: https://pypi.org/project/sparse_convolution/$VERSION/"
         --repo ${{ github.repository }}

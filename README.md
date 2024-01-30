@@ -7,6 +7,12 @@ This allows for extremely fast convolution when:
 - Many arrays are convolved with the same kernel
 
 ## Install: 
+The package is available on PyPI. \
+`pip install sparse_convolution`
+
+<br>
+
+Alternatively, you can install from source. \
 `git clone https://github.com/RichieHakim/sparse_convolution` \
 `cd sparse_convolution` \
 `pip install -e .` 

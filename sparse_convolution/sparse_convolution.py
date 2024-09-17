@@ -1,56 +1,75 @@
+from typing import Tuple, Optional, Union
+
 import scipy.sparse
 import numpy as np
 
-class Toeplitz_convolution2d:
+class Toeplitz_convolution2d():
     """
-    Convolve a 2D array with a 2D kernel using the Toeplitz matrix 
-     multiplication method.
-    Allows for SPARSE 'x' inputs. 'k' should remain dense.
-    Ideal when 'x' is very sparse (density<0.01), 'x' is small
-     (shape <(1000,1000)), 'k' is small (shape <(100,100)), and
-     the batch size is large (e.g. 1000+).
-    Generally faster than scipy.signal.convolve2d when convolving mutliple
-     arrays with the same kernel. Maintains low memory footprint by
-     storing the toeplitz matrix as a sparse matrix.
-
-    See: https://stackoverflow.com/a/51865516 and https://github.com/alisaaalehi/convolution_as_multiplication
-     for a nice illustration.
-    See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.convolution_matrix.html 
-     for 1D version.
-    See: https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.matmul_toeplitz.html#scipy.linalg.matmul_toeplitz 
-     for potential ways to make this implementation faster.
-
-    Test with: tests.test_toeplitz_convolution2d()
+    Convolve a 2D array with a 2D kernel using the Toeplitz matrix
+    multiplication method. This class is ideal when 'x' is very sparse
+    (density<0.01), 'x' is small (shape <(1000,1000)), 'k' is small (shape
+    <(100,100)), and the batch size is large (e.g. 1000+). Generally, it is
+    faster than scipy.signal.convolve2d when convolving multiple arrays with the
+    same kernel. It maintains a low memory footprint by storing the toeplitz
+    matrix as a sparse matrix.
     RH 2022
+
+    Attributes:
+        x_shape (Tuple[int, int]):
+            The shape of the 2D array to be convolved.
+        k (np.ndarray):
+            2D kernel to convolve with.
+        mode (str):
+            Either ``'full'``, ``'same'``, or ``'valid'``. See
+            scipy.signal.convolve2d for details.
+        dtype (Optional[np.dtype]):
+            The data type to use for the Toeplitz matrix.
+            If ``None``, then the data type of the kernel is used.
+
+    Args:
+        x_shape (Tuple[int, int]):
+            The shape of the 2D array to be convolved.
+        k (np.ndarray):
+            2D kernel to convolve with.
+        mode (str):
+            Convolution method to use, either ``'full'``, ``'same'``, or
+            ``'valid'``.
+            See scipy.signal.convolve2d for details. (Default is 'same')
+        dtype (Optional[np.dtype]):
+            The data type to use for the Toeplitz matrix. Ideally, this matches
+            the data type of the input array. If ``None``, then the data type of
+            the kernel is used. (Default is ``None``)
+
+    Example:
+        .. highlight:: python
+        .. code-block:: python
+
+            # create Toeplitz_convolution2d object
+            toeplitz_convolution2d = Toeplitz_convolution2d(
+                x_shape=(100,30),
+                k=np.random.rand(10,10),
+                mode='same',
+            )
+            toeplitz_convolution2d(
+                x=scipy.sparse.csr_matrix(np.random.rand(5,3000)),
+                batch_size=True,
+            )
     """
     def __init__(
         self,
-        x_shape,
-        k,
-        mode='same',
-        dtype=None,
+        x_shape: Tuple[int, int],
+        k: np.ndarray,
+        mode: str = 'same',
+        dtype: Optional[np.dtype] = None,
     ):
         """
-        Initialize the convolution object.
-        Makes the Toeplitz matrix and stores it.
-
-        Args:
-            x_shape (tuple):
-                The shape of the 2D array to be convolved.
-            k (np.ndarray):
-                2D kernel to convolve with
-            mode (str):
-                'full', 'same' or 'valid'
-                see scipy.signal.convolve2d for details
-            dtype (np.dtype):
-                The data type to use for the Toeplitz matrix.
-                Ideally, this matches the data type of the input array.
-                If None, then the data type of the kernel is used.
+        Initializes the Toeplitz_convolution2d object and stores the Toeplitz
+        matrix.
         """
         self.k = k = np.flipud(k.copy())
         self.mode = mode
         self.x_shape = x_shape
-        self.dtype = k.dtype if dtype is None else dtype
+        dtype = k.dtype if dtype is None else dtype
 
         if mode == 'valid':
             assert x_shape[0] >= k.shape[0] and x_shape[1] >= k.shape[1], "x must be larger than k in both dimensions for mode='valid'"
@@ -59,12 +78,12 @@ class Toeplitz_convolution2d:
 
         ## make the toeplitz matrices
         t = toeplitz_matrices = [scipy.sparse.diags(
-            diagonals=np.ones((k.shape[1], x_shape[1]), dtype=self.dtype) * k_i[::-1][:,None], 
+            diagonals=np.ones((k.shape[1], x_shape[1]), dtype=dtype) * k_i[::-1][:,None], 
             offsets=np.arange(-k.shape[1]+1, 1), 
             shape=(so[1], x_shape[1]),
-            dtype=self.dtype,
+            dtype=dtype,
         ) for k_i in k[::-1]]  ## make the toeplitz matrices for the rows of the kernel
-        tc = toeplitz_concatenated = scipy.sparse.vstack(t + [scipy.sparse.dia_matrix((t[0].shape), dtype=self.dtype)]*(x_shape[0]-1))  ## add empty matrices to the bottom of the block due to padding, then concatenate
+        tc = toeplitz_concatenated = scipy.sparse.vstack(t + [scipy.sparse.dia_matrix((t[0].shape), dtype=dtype)]*(x_shape[0]-1))  ## add empty matrices to the bottom of the block due to padding, then concatenate
 
         ## make the double block toeplitz matrix
         self.dt = double_toeplitz = scipy.sparse.hstack([self._roll_sparse(
@@ -74,42 +93,43 @@ class Toeplitz_convolution2d:
     
     def __call__(
         self,
-        x,
-        batching=True,
-        mode=None,
-    ):
+        x: Union[np.ndarray, scipy.sparse.csc_matrix, scipy.sparse.csr_matrix],
+        batching: bool = True,
+        mode: Optional[str] = None,
+    ) -> Union[np.ndarray, scipy.sparse.csr_matrix]:
         """
         Convolve the input array with the kernel.
 
         Args:
-            x (np.ndarray or scipy.sparse.csc_matrix or scipy.sparse.csr_matrix):
-                Input array(s) (i.e. image(s)) to convolve with the kernel
-                If batching==False: Single 2D array to convolve with the kernel.
-                    shape: (self.x_shape[0], self.x_shape[1])
-                    type: np.ndarray or scipy.sparse.csc_matrix or scipy.sparse.csr_matrix
-                If batching==True: Multiple 2D arrays that have been flattened
-                 into row vectors (with order='C').
-                    shape: (n_arrays, self.x_shape[0]*self.x_shape[1])
-                    type: np.ndarray or scipy.sparse.csc_matrix or scipy.sparse.csr_matrix
-            batching (bool):
-                If False, x is a single 2D array.
-                If True, x is a 2D array where each row is a flattened 2D array.
-            mode (str):
-                'full', 'same' or 'valid'
-                see scipy.signal.convolve2d for details
-                Overrides the mode set in __init__.
+            x (Union[np.ndarray, scipy.sparse.csc_matrix,
+            scipy.sparse.csr_matrix]): 
+                Input array(s) (i.e. image(s)) to convolve with the kernel. \n
+                * If ``batching==False``: Single 2D array to convolve with the
+                  kernel. Shape: *(self.x_shape[0], self.x_shape[1])*
+                * If ``batching==True``: Multiple 2D arrays that have been
+                  flattened into row vectors (with order='C'). \n
+                Shape: *(n_arrays, self.x_shape[0]*self.x_shape[1])*
+
+            batching (bool): 
+                * ``False``: x is a single 2D array.
+                * ``True``: x is a 2D array where each row is a flattened 2D
+                  array. \n
+                (Default is ``True``)
+
+            mode (Optional[str]): 
+                Defines the mode of the convolution. Options are 'full', 'same'
+                or 'valid'. See `scipy.signal.convolve2d` for details. Overrides
+                the mode set in __init__. (Default is ``None``)
 
         Returns:
-            out (np.ndarray or scipy.sparse.csr_matrix):
-                If batching==True: Multiple convolved 2D arrays that have been flattened
-                 into row vectors (with order='C').
-                    shape: (n_arrays, height*width)
-                    type: np.ndarray or scipy.sparse.csc_matrix
-                If batching==False: Single convolved 2D array of shape (height, width)
+            (Union[np.ndarray, scipy.sparse.csr_matrix]):
+                out (Union[np.ndarray, scipy.sparse.csr_matrix]): 
+                    * ``batching==True``: Multiple convolved 2D arrays that have
+                      been flattened into row vectors (with order='C'). Shape:
+                      *(n_arrays, height*width)*
+                    * ``batching==False``: Single convolved 2D array of shape
+                      *(height, width)*
         """
-        # if batching:
-        #     if x.shape[0] > 9999:
-        #         print("RH WARNING: scipy.sparse.lil_matrix doesn't seem to work well with arrays with large numbers of rows. Consider breaking your job into smaller batches.")
         if mode is None:
             mode = self.mode  ## use the mode that was set in the init if not specified
         issparse = scipy.sparse.issparse(x)
@@ -161,8 +181,8 @@ class Toeplitz_convolution2d:
     
     def _roll_sparse(
         self,
-        x,
-        shift,
+        x: scipy.sparse.csr_matrix,
+        shift: int,
     ):
         """
         Roll columns of a sparse matrix.

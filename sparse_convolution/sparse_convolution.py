@@ -69,7 +69,7 @@ class Toeplitz_convolution2d():
         """
         ## Type checking
         assert isinstance(x_shape, tuple), "x_shape must be a tuple"
-        assert all([isinstance(s, (int, float, np.int_, np.float_)) for s in x_shape]), "x_shape must be a tuple of integers"
+        assert all([isinstance(s, (int, float)) for s in x_shape]), "x_shape must be a tuple of integers"
         x_shape = (int(x_shape[0]), int(x_shape[1]))
 
         assert isinstance(k, np.ndarray), "k must be a numpy array"

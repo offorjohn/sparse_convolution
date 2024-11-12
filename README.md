@@ -2,9 +2,10 @@
 Sparse convolution in python. \
 Uses Toeplitz convolutional matrix multiplication to perform sparse convolution. \
 This allows for extremely fast convolution when: 
-- The kernel is small (<= 30x30)
+- The kernel is small (<= 100x100)
 - The input array is sparse (<= 1% density)
-- Many arrays are convolved with the same kernel
+- The input array is small (<= 1000x1000)
+- Many arrays are convolved with the same kernel (large batch size >= 1000)
 
 ## Install: 
 The package is available on PyPI. \
@@ -32,7 +33,7 @@ A = scipy.sparse.rand(100, 100, density=0.1)
 B = np.random.rand(3, 3)
 
 # Prepare class
-conv = Toeplitz_convolution2d(
+conv = sc.Toeplitz_convolution2d(
     x_shape=A.shape,
     k=B,
     mode='same',
@@ -43,7 +44,6 @@ conv = Toeplitz_convolution2d(
 C = conv(
     x=A,
     batching=False,
-    mode='same',
 ).toarray()
 ```
 
@@ -79,7 +79,6 @@ conv = sc.Toeplitz_convolution2d(
 C = conv(
     x=A,
     batching=True,
-    mode='same',
 )
 
 # Reshape the output back to (3, 100, 100)

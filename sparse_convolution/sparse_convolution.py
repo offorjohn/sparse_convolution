@@ -61,11 +61,36 @@ class Toeplitz_convolution2d():
         k: np.ndarray,
         mode: str = 'same',
         dtype: Optional[np.dtype] = None,
+        verbose: Union[bool, int] = False,
     ):
         """
         Initializes the Toeplitz_convolution2d object and stores the Toeplitz
         matrix.
         """
+        ## Type checking
+        assert isinstance(x_shape, tuple), "x_shape must be a tuple"
+        assert all([isinstance(s, (int, float, np.int_, np.float_)) for s in x_shape]), "x_shape must be a tuple of integers"
+        x_shape = (int(x_shape[0]), int(x_shape[1]))
+
+        assert isinstance(k, np.ndarray), "k must be a numpy array"
+        assert k.ndim == 2, "k must be a 2D array"
+
+        assert isinstance(mode, str), "mode must be a string"
+        assert mode in ['full', 'same', 'valid'], "mode must be 'full', 'same', or 'valid'"
+
+        # if dtype is not None:
+        #     assert isinstance(dtype, np.dtype), "dtype must be a numpy dtype"
+
+        ## Warn if x_shape is large
+        if verbose > 0:
+            n_nz_elements_expected = x_shape[0]*x_shape[1]*k.shape[0]*k.shape[1]
+            if n_nz_elements_expected >= 1e8:
+                print("Warning: Expected number of non-zero elements in the Toeplitz matrix is large. \n"
+                      f"(x_shape[0]*x_shape[1]*k.shape[0]*k.shape[1]) = {n_nz_elements_expected} non-zero elements. \n"
+                      "This will likely be slow and have a large memory footprint. \n"
+                      "Consider breaking the `x` array into smaller chunks or tiles so that `x_shape` can be smaller and performing the convolution in batches.")
+
+
         self.k = k = np.flipud(k.copy())
         self.mode = mode
         self.x_shape = x_shape
@@ -146,37 +171,37 @@ class Toeplitz_convolution2d():
             
         ## crop the output to the correct size
         if mode == 'full':
-            p_t = 0
-            p_b = self.so[0]+1
-            p_l = 0
-            p_r = self.so[1]+1
+            t = 0
+            b = self.so[0]+1
+            l = 0
+            r = self.so[1]+1
         if mode == 'same':
-            p_t = (self.k.shape[0]-1)//2
-            p_b = -(self.k.shape[0]-1)//2
-            p_l = (self.k.shape[1]-1)//2
-            p_r = -(self.k.shape[1]-1)//2
+            t = (self.k.shape[0]-1)//2
+            b = -(self.k.shape[0]-1)//2
+            l = (self.k.shape[1]-1)//2
+            r = -(self.k.shape[1]-1)//2
 
-            p_b = self.x_shape[0]+1 if p_b==0 else p_b
-            p_r = self.x_shape[1]+1 if p_r==0 else p_r
+            b = self.x_shape[0]+1 if b==0 else b
+            r = self.x_shape[1]+1 if r==0 else r
         if mode == 'valid':
-            p_t = (self.k.shape[0]-1)
-            p_b = -(self.k.shape[0]-1)
-            p_l = (self.k.shape[1]-1)
-            p_r = -(self.k.shape[1]-1)
+            t = (self.k.shape[0]-1)
+            b = -(self.k.shape[0]-1)
+            l = (self.k.shape[1]-1)
+            r = -(self.k.shape[1]-1)
 
-            p_b = self.x_shape[0]+1 if p_b==0 else p_b
-            p_r = self.x_shape[1]+1 if p_r==0 else p_r
+            b = self.x_shape[0]+1 if b==0 else b
+            r = self.x_shape[1]+1 if r==0 else r
         
         if batching:
             idx_crop = np.zeros((self.so), dtype=np.bool_)
-            idx_crop[p_t:p_b, p_l:p_r] = True
+            idx_crop[t:b, l:r] = True
             idx_crop = idx_crop.reshape(-1)
             out = out_v[idx_crop,:].T
         else:
             if issparse:
-                out = out_v.reshape((self.so)).tocsc()[p_t:p_b, p_l:p_r]
+                out = out_v.reshape((self.so)).tocsc()[t:b, l:r]
             else:
-                out = out_v.reshape((self.so))[p_t:p_b, p_l:p_r]  ## reshape back into 2D array and crop
+                out = out_v.reshape((self.so))[t:b, l:r]  ## reshape back into 2D array and crop
         return out
     
     def _roll_sparse(

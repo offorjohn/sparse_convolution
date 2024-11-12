@@ -40,7 +40,7 @@ def test_toeplitz_convolution2d():
                 success = False
                 break
             try:
-                if np.allclose(out_t2d, out_t2d_s.A) and np.allclose(out_t2d, out_sp) and np.allclose(out_sp, out_t2d_s.A):
+                if np.allclose(out_t2d, out_t2d_s.toarray()) and np.allclose(out_t2d, out_sp) and np.allclose(out_sp, out_t2d_s.toarray()):
                     success = True
                     continue
             except Exception as e:

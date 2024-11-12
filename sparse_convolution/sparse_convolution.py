@@ -68,8 +68,8 @@ class Toeplitz_convolution2d():
         matrix.
         """
         ## Type checking
-        assert isinstance(x_shape, tuple), "x_shape must be a tuple"
-        assert all([isinstance(s, (int, float)) for s in x_shape]), "x_shape must be a tuple of integers"
+        assert isinstance(x_shape, (tuple, list)), f"x_shape must be a tuple. Found: {type(x_shape)}"
+        assert all([isinstance(s, (int, float, np.integer, np.floating)) for s in x_shape]), f"x_shape must be a tuple of integers. Found: {[type(s) for s in x_shape]}"
         x_shape = (int(x_shape[0]), int(x_shape[1]))
 
         assert isinstance(k, np.ndarray), "k must be a numpy array"
